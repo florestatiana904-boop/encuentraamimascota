@@ -92,9 +92,9 @@ export function ProfileForm({ user, profile }: ProfileFormProps) {
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Correo electrónico</Label>
           <Input id="email" type="email" value={user.email || ""} disabled className="bg-muted" />
-          <p className="text-sm text-muted-foreground">El email no se puede cambiar</p>
+          <p className="text-sm text-muted-foreground">El correo electrónico no se puede cambiar</p>
         </div>
 
         <div className="space-y-2">

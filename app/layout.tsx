@@ -26,7 +26,7 @@ export default async function RootLayout({
   } = await supabase.auth.getUser()
 
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <Navigation isAuthenticated={!!user} />
         <Suspense fallback={null}>{children}</Suspense>
