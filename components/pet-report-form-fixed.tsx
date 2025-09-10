@@ -69,129 +69,79 @@ export function PetReportForm({ defaultStatus }: PetReportFormProps) {
     e.preventDefault()
     setIsLoading(true)
 
-    console.log("[v0] Iniciando envío del formulario", formData)
-
     try {
       const supabase = createClient()
       const {
         data: { user },
-        error: userError,
       } = await supabase.auth.getUser()
 
-      if (userError) {
-        console.log("[v0] Error obteniendo usuario:", userError)
-        throw new Error("Error de autenticación: " + userError.message)
-      }
-
       if (!user) {
-        console.log("[v0] Usuario no autenticado")
-        throw new Error("Usuario no autenticado. Por favor inicia sesión.")
+        throw new Error("Usuario no autenticado")
       }
 
-      console.log("[v0] Usuario autenticado:", user.id)
-
-      const requiredFields = {
-        name: formData.name,
-        species: formData.species,
-        last_seen_location: formData.last_seen_location,
-        last_seen_date: formData.last_seen_date,
-        contact_phone: formData.contact_phone,
-        contact_email: formData.contact_email,
-      }
-
-      const missingFields = Object.entries(requiredFields)
-        .filter(([_, value]) => !value || value.trim() === "")
-        .map(([key, _]) => key)
-
-      if (missingFields.length > 0) {
-        console.log("[v0] Campos faltantes:", missingFields)
-        throw new Error(`Por favor completa los siguientes campos: ${missingFields.join(", ")}`)
+      if (
+        !formData.name ||
+        !formData.species ||
+        !formData.last_seen_location ||
+        !formData.last_seen_date ||
+        !formData.contact_phone ||
+        !formData.contact_email
+      ) {
+        throw new Error("Por favor completa todos los campos requeridos")
       }
 
       let photoUrl = null
 
+      // Upload photo if provided
       if (photoFile) {
-        console.log("[v0] Subiendo foto:", photoFile.name)
         const fileExt = photoFile.name.split(".").pop()
         const fileName = `${user.id}/${Date.now()}.${fileExt}`
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("pet-photos")
-          .upload(fileName, photoFile)
+        const { error: uploadError } = await supabase.storage.from("pet-photos").upload(fileName, photoFile)
 
         if (uploadError) {
-          console.log("[v0] Error subiendo foto:", uploadError)
-          throw new Error("Error subiendo la foto: " + uploadError.message)
+          throw uploadError
         }
-
-        console.log("[v0] Foto subida exitosamente:", uploadData)
 
         const {
           data: { publicUrl },
         } = supabase.storage.from("pet-photos").getPublicUrl(fileName)
         photoUrl = publicUrl
-        console.log("[v0] URL pública de la foto:", photoUrl)
       }
 
-      const petData = {
+      const { error: insertError } = await supabase.from("pets").insert({
         user_id: user.id,
-        name: formData.name.trim(),
+        name: formData.name,
         species: formData.species,
-        breed: formData.breed?.trim() || null,
-        color: formData.color?.trim() || null,
+        breed: formData.breed || null,
+        color: formData.color || null,
         size: formData.size || null,
         age_range: formData.age_range || null,
         gender: formData.gender || null,
         status: formData.status,
-        description: formData.description?.trim() || null,
-        last_seen_location: formData.last_seen_location.trim(),
+        description: formData.description || null,
+        last_seen_location: formData.last_seen_location,
         last_seen_date: formData.last_seen_date,
-        contact_phone: formData.contact_phone.trim(),
-        contact_email: formData.contact_email.trim(),
+        contact_phone: formData.contact_phone,
+        contact_email: formData.contact_email,
         photo_url: photoUrl,
-      }
-
-      console.log("[v0] Insertando datos de mascota:", petData)
-
-      const { data: insertData, error: insertError } = await supabase.from("pets").insert(petData).select()
+      })
 
       if (insertError) {
-        console.log("[v0] Error insertando mascota:", insertError)
-        throw new Error("Error guardando la información: " + insertError.message)
+        throw insertError
       }
 
-      console.log("[v0] Mascota insertada exitosamente:", insertData)
-
       toast({
-        title: "¡Mascota reportada exitosamente!",
+        title: "Mascota reportada exitosamente",
         description: "Tu reporte ha sido publicado y la comunidad podrá verlo.",
       })
 
-      setFormData({
-        name: "",
-        species: "",
-        breed: "",
-        color: "",
-        size: "",
-        age_range: "",
-        gender: "",
-        status: defaultStatus,
-        description: "",
-        last_seen_location: "",
-        last_seen_date: "",
-        contact_phone: "",
-        contact_email: "",
-      })
-      setPhotoFile(null)
-      setPhotoPreview(null)
-
       router.push("/dashboard")
     } catch (error) {
-      console.error("[v0] Error completo:", error)
+      console.error("Error:", error)
       toast({
         title: "Error al reportar mascota",
-        description:
-          error instanceof Error ? error.message : "Ocurrió un error inesperado. Por favor intenta de nuevo.",
+        description: error instanceof Error ? error.message : "Ocurrió un error inesperado",
         variant: "destructive",
       })
     } finally {
