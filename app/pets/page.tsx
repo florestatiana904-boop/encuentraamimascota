@@ -15,7 +15,6 @@ export default async function PetsPage({
   const supabase = await createClient()
   const params = await searchParams
 
-  // Build query with filters
   let query = supabase
     .from("pets")
     .select(
@@ -26,7 +25,7 @@ export default async function PetsPage({
       )
     `,
     )
-    .eq("is_active", true)
+    .eq("is_active", true) // Solo mascotas activas, de cualquier usuario
     .order("created_at", { ascending: false })
 
   // Apply filters
@@ -65,7 +64,11 @@ export default async function PetsPage({
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2">Mascotas Perdidas y Encontradas</h1>
             <p className="text-muted-foreground">
-              Ayuda a reunir mascotas con sus familias. {pets?.length || 0} mascotas reportadas.
+              Todos los avisos de la comunidad en un solo lugar. {pets?.length || 0} mascotas reportadas por usuarios de
+              toda la plataforma.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              ✨ Acceso libre - No necesitas registrarte para ver los avisos y ayudar a reunir mascotas con sus familias
             </p>
           </div>
 
